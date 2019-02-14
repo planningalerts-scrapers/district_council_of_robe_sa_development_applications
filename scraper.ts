@@ -178,9 +178,9 @@ function findElement(elements: Element[], text: string, shouldSelectRightmostEle
 
             let currentText = rightElements.map(element => element.text).join("").replace(/[\s,\-_]/g, "").toLowerCase();
 
-            if (currentText.length > text.length + 2)  // stop once the text is too long
+            if (currentText.length > condensedText.length + 2)  // stop once the text is too long
                 break;
-            if (currentText.length >= text.length - 2) {  // ignore until the text is close to long enough
+            if (currentText.length >= condensedText.length - 2) {  // ignore until the text is close to long enough
                 if (currentText === condensedText)
                     matches.push({ leftElement: rightElements[0], rightElement: rightElement, threshold: 0, text: currentText });
                 else if (didYouMean(currentText, [ condensedText ], { caseSensitive: false, returnType: didyoumean.ReturnTypeEnums.FIRST_CLOSEST_MATCH, thresholdType: didyoumean.ThresholdTypeEnums.EDIT_DISTANCE, threshold: 1, trimSpaces: true }) !== null)
@@ -197,6 +197,10 @@ function findElement(elements: Element[], text: string, shouldSelectRightmostEle
     // that text such as "  Plan" is matched in preference to text such as "plan)" (when looking
     // for elements that match "Plan").  For an example of this problem see "200/303/07" in
     // "https://www.walkerville.sa.gov.au/webdata/resources/files/DA%20Register%20-%202007.pdf".
+    //
+    // Note that if the match is made of several elements then sometimes the caller requires the
+    // left most element and sometimes the right most element (depending on where further text
+    // will be searched for relative to this "found" element).
 
     if (matches.length > 0) {
         let bestMatch = matches.reduce((previous, current) =>
@@ -397,7 +401,7 @@ function getDownText(elements: Element[], topText: string, rightText: string, bo
 
 function formatAddress(houseNumber: string, streetName: string, suburbName: string) {
     suburbName = suburbName.replace(/^HD /, "").replace(/ HD$/, "").replace(/ SA$/, "").trim();
-    suburbName = SuburbNames[suburbName] || suburbName;
+    suburbName = SuburbNames[suburbName.toUpperCase()] || suburbName;
     let separator = ((houseNumber !== "" || streetName !== "") && suburbName !== "") ? ", " : "";
     return `${houseNumber} ${streetName}${separator}${suburbName}`.trim().replace(/\s\s+/g, " ").toUpperCase().replace(/\*/g, "");
 }
